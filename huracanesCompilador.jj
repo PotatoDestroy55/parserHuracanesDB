@@ -1,0 +1,316 @@
+PARSER_BEGIN(huracanesCompilador)
+class huracanesCompilador
+{
+
+	public static void main (String[] args) throws ParseException{
+
+		System.out.println("ocean,numCycl,year,name,numTrcks,yearTrck,monthTrck,dayTrck,hourTrck,minutsTrck,recordId,statusSys,latitude,longitude,maxSustWin,minPress,34ktNE,34ktSE,34ktSW,34ktNW,50ktNE,50ktSE,50ktSW,50ktNW,64ktNE,64ktSE,64ktSW,64ktNW,radMaxWind");
+
+		try {
+			huracanesCompilador analizador = new huracanesCompilador(System.in);
+			analizador.compilador();
+		}
+		catch(ParseException e) {
+			System.out.println("hay un error: ");
+			System.out.println(e.getMessage());
+		}
+	}
+}
+PARSER_END(huracanesCompilador)
+
+// Token que caracteriza al huracan
+TOKEN : {
+	<IdHuracan: <REGION> <NUMEROCOMA> > 
+	{
+
+		String aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		matchedToken.image = aux;
+	}
+	| <NombreHuracan: (<ESPACIO>)* <LETRAS> <COMA> (<ESPACIO>)* <NUMEROFILAS>  <COMA> (<ESPACIO>)*  > 
+	{
+	 	
+		aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		matchedToken.image = aux;
+	}
+	| <VelocidadHuracan: (<ESPACIO> | <RECID> | <COMA>)* <COMA> <ESPACIO> <ESTADOSISTEMA> <COMA> > { 
+		
+		String[] separador;
+
+		aux = image.toString();
+
+		separador = aux.split("," , 2 );
+
+		separador[0] = separador[0].replace(" ", "");
+
+		if ( separador[0].isEmpty() )
+		{
+			separador[0] = "N/A";
+		}
+		separador[1] = separador[1].replace(" ","");
+
+		matchedToken.image = separador[0] + "," + separador[1];
+	}
+	| <Fecha: <ANIO> <MES> <DIA> <COMA> <ESPACIO> <HORA> <COMA> <ESPACIO> > { 
+		
+		aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		matchedToken.image = aux;
+
+	}
+	| <Latitud:<ESPACIO> <NUMERO> <PUNTO> <NUMERO> <LAT> <COMA> > 
+	{ 
+		aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		if (aux.contains("S"))
+		{
+			aux = aux.replace("S", "");
+			aux = "-" + aux; 
+		}
+
+		aux = aux.replace("N", "");
+
+		matchedToken.image = aux;
+	}
+	| <Longitud:<ESPACIO> <NUMERO> <PUNTO> <NUMERO> <LON> <COMA> > 
+	{ 
+		aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		if (aux.contains("W"))
+		{
+			aux = aux.replace("W", "");
+			aux = "-" + aux; 
+		}
+
+		aux = aux.replace("E", "");
+
+		matchedToken.image = aux;
+	}
+	| <Vientos: <VIENTOS> >
+	{
+		aux = image.toString();
+
+		aux = aux.replace(" ", "");
+
+		if(aux.equals("-999,") )
+		{
+			aux = "NULL,";
+		}
+
+		matchedToken.image = aux;
+	}
+}
+
+// Tokens para la fecha y hora
+TOKEN : {
+	<DIA: ["0"-"3"] ["0"-"9"]> 
+	| <MES:["0"-"1"] ["0"-"9"]>
+	| <ANIO: (["0"-"9"]){4} > 
+	| <NUMERODOSDIGITOS:(["0"-"9"]){2}>
+	| <HORA: (["0"-"9"])* >
+	| <VIENTOS: (<ESPACIO> <SIGNOMENOS>)+ (<NUMEROCOMA>) * >
+
+}
+// Simbolos, letras y numeros para uso general
+TOKEN :
+{
+	<SIGNOMENOS: ("-")* >
+	| <COMA: "," >
+	| <LETRAS:  (["A" - "Z", "a" - "z","-"]){3,} > 
+	| <PUNTO: ".">
+	| <NUMERO: (["0"-"9"])*>
+	| <NUMEROFILAS: (["0"-"9"]){1,3}>
+	| <NUMEROCOMA: (["0"-"9",","])*>
+	| <ESPACIO: (" ")+>
+	| <REGION: ("AL" | "PA")>
+    | <LAT: ("N" | "S")>
+    | <LON: ("E" | "W")>
+
+}
+
+// Tokes exclusivos para los huracanes
+TOKEN : {
+<RECID: "C"|"G"|"I"|"L"|"P"|"R"|"S"|"T"|"W">{System.out.println("RECORDIDENT");}|
+<ESTADOSISTEMA:"TD"|"TS"|"HU"|"EX"|"SD"|"SS"|"LO"|"WV"|"DB" >{System.out.println("ESTADOSISTEMA");}
+}
+
+
+// Metodo de ayuda para siempre imprimir el id en cada regitrso correspondiente
+String Identificador():
+{
+    Token temporal;
+    String identificadorRegistro = "", aux = "";
+}
+{
+    // Generar cadena de retorno
+    temporal = <IdHuracan>
+    {
+    	aux = temporal.image.toString();
+		String al = aux.substring(0,2);
+		String numberHur = aux.substring(2,4);
+		String year = aux.substring(4);
+
+        identificadorRegistro += al + "," + numberHur +"," + year;
+    } 
+    temporal = <NombreHuracan>
+    {
+        identificadorRegistro += temporal.image;
+        return identificadorRegistro;
+    }
+}
+
+
+
+
+void huracan(): {} 
+{
+	(<IdHuracan>)?
+	(<NombreHuracan>)?
+}
+String informacion(): 
+{
+	Token fecha, velocidadHur, lat, longi;
+	Token max, min,ktNE34, ktSE34,ktSW34, ktNW34, ktNE50, ktSE50, ktSW50,ktNW50, ktNE64, ktSE64,ktSW64,ktNW64, radMaxWind;
+	String aux = "", informacion = "", year, month, day, hour, minutes, cadena = "";
+	String[]  separador;
+}
+{
+	fecha = <Fecha>
+	{
+
+		aux = fecha.image.toString();
+
+		separador = aux.split("," , 2);
+
+		year = separador[0].substring(0,4)+ ",";
+
+		month = separador[0].substring(4,6)+ ",";
+
+		day = separador[0].substring(6)+ ",";
+
+
+		hour = separador[1].substring(0,2) + ",";
+
+		minutes = separador[1].substring(2);
+
+		cadena += year + month + day+ hour+ minutes;
+
+		informacion += cadena;
+	}
+	velocidadHur = <VelocidadHuracan>
+	{	
+		informacion += velocidadHur;
+	}
+	lat = <Latitud>
+	{
+		informacion += lat;
+	}
+	longi = <Longitud>
+	{
+		informacion += longi;
+	}
+	max = <Vientos>
+    {
+        informacion += max;
+    }
+    min = <Vientos>
+    {
+        informacion += min;
+    }
+    ktNE34 = <Vientos>
+    {
+        informacion += ktNE34;
+    }
+    ktSE34 = <Vientos>
+    {
+        informacion += ktSE34;
+    }
+    ktSW34 = <Vientos>
+    {
+        informacion += ktSW34;
+    }
+    ktNW34 = <Vientos>
+    {
+        informacion += ktNW34;
+    }
+    ktNE50 = <Vientos>
+    {
+        informacion += ktNE50;
+    }
+    ktSE50 = <Vientos>
+    {
+
+        informacion += ktSE50;
+    }
+    ktSW50 = <Vientos>
+    {
+        informacion += ktSW50;
+    }
+    ktNW50 = <Vientos>
+    {
+        informacion += ktNW50;
+    }
+    ktNE64 = <Vientos>
+    {
+        informacion += ktNE64;
+    }
+    ktSE64 = <Vientos>
+    {
+
+        informacion += ktSE64;
+    }
+    ktSW64 = <Vientos>
+    {
+        informacion += ktSW64;
+    }
+    ktNW64 = <Vientos>
+    {
+		informacion += ktNW64;
+
+    }
+	radMaxWind = <Vientos>
+	{
+		aux = ktNW64.image.toString();
+
+    	aux = aux.replace(",", "");
+
+		informacion += aux;
+
+		return informacion;
+	} 
+
+}
+
+
+void compilador():
+{
+    String cabecera, informacionRegistro;
+}
+{
+    (
+        cabecera = Identificador()
+        (
+        	informacionRegistro = informacion()
+        	{
+        		System.out.println(cabecera + informacionRegistro);
+        	}
+        )+
+
+    )+
+    <EOF>
+}
+
+SKIP: {
+	"\r" | "\t" | "\n" | " "
+}
