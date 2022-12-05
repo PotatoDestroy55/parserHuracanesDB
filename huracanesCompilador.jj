@@ -29,7 +29,7 @@ TOKEN : {
 
 		matchedToken.image = aux;
 	}
-	| <NombreHuracan: (<ESPACIO>)* <LETRAS> <COMA> (<ESPACIO>)* <NUMEROFILAS>  <COMA> (<ESPACIO>)*  > 
+	| <NombreHuracan: (<ESPACIO>)* <LETRAS> (<NUMERO>){1} (<ESPACIO>)* <COMA> (<ESPACIO>)* <NUMEROFILAS>  <COMA> (<ESPACIO>)*  > 
 	{
 	 	
 		aux = image.toString();
@@ -38,7 +38,7 @@ TOKEN : {
 
 		matchedToken.image = aux;
 	}
-	| <VelocidadHuracan: (<ESPACIO> | <RECID> | <COMA>)* <COMA> <ESPACIO> <ESTADOSISTEMA> <COMA> > { 
+	| <VelocidadHuracan: (<COMA>)* (<ESPACIO> | <RECID> | <COMA>)* <COMA> <ESPACIO> <ESTADOSISTEMA> <COMA> > { 
 		
 		String[] separador;
 
@@ -127,13 +127,13 @@ TOKEN :
 {
 	<SIGNOMENOS: ("-")* >
 	| <COMA: "," >
-	| <LETRAS:  (["A" - "Z", "a" - "z","-"]){3,} > 
+	| <LETRAS:  (["A" - "Z", "a" - "z","-"]){2,} > 
 	| <PUNTO: ".">
 	| <NUMERO: (["0"-"9"])*>
 	| <NUMEROFILAS: (["0"-"9"]){1,3}>
 	| <NUMEROCOMA: (["0"-"9",","])*>
 	| <ESPACIO: (" ")+>
-	| <REGION: ("AL" | "PA")>
+	| <REGION: ("AL" | "PA" | "EP" | "CP")>
     | <LAT: ("N" | "S")>
     | <LON: ("E" | "W")>
 
@@ -142,7 +142,7 @@ TOKEN :
 // Tokes exclusivos para los huracanes
 TOKEN : {
 <RECID: "C"|"G"|"I"|"L"|"P"|"R"|"S"|"T"|"W">{System.out.println("RECORDIDENT");}|
-<ESTADOSISTEMA:"TD"|"TS"|"HU"|"EX"|"SD"|"SS"|"LO"|"WV"|"DB" >{System.out.println("ESTADOSISTEMA");}
+<ESTADOSISTEMA:"TD"|"TS"|"HU"|"EX"|"SD"|"SS"|"LO"|"WV"|"DB" | "ET" | "TY" | "PT" |"ST" >{System.out.println("ESTADOSISTEMA");}
 }
 
 
